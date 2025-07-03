@@ -1,0 +1,277 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+  EyeOff,
+  ArrowUpDown,
+  Filter,
+  Upload,
+  Download,
+  LayoutGrid,
+  ChevronDown,
+  MoreHorizontal,
+  GitFork,
+  Share2,
+} from "lucide-react";
+import ImportModal from "./ImportModal";
+import ShareModal from "./ShareModal";
+import NewActionModal from "./NewActionModal";
+
+interface ToolbarProps {
+  onAction: (action: string) => void;
+  isColumnSelected: boolean;
+  onHideFields: () => void;
+  onShowAll: () => void;
+  onSort: () => void;
+  onClearSort: () => void;
+  selectedColumns: number[];
+  hiddenColumns: number[];
+  sheets: any[];
+  currentSheet: string;
+  onExport: () => void;
+}
+
+const Toolbar: React.FC<ToolbarProps> = ({
+  onAction,
+  isColumnSelected,
+  onHideFields,
+  onShowAll,
+  onSort,
+  onClearSort,
+  selectedColumns,
+  hiddenColumns,
+  sheets,
+  currentSheet,
+  onExport,
+}) => {
+  const [showLeftDropdown, setShowLeftDropdown] = useState(false);
+  const [showRightDropdown, setShowRightDropdown] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showNewActionModal, setShowNewActionModal] = useState(false);
+  const leftDropdownRef = useRef<HTMLDivElement>(null);
+  const rightDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        leftDropdownRef.current &&
+        !leftDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowLeftDropdown(false);
+      }
+      if (
+        rightDropdownRef.current &&
+        !rightDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowRightDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleNewAction = () => {
+    setShowNewActionModal(true);
+  };
+
+  return (
+    <div className="bg-white border-b border-gray-200 px-4 py-1 relative">
+      <div className="flex items-center justify-between">
+        {/* Left side */}
+        <div
+          className="flex items-center space-x-0.5 text-sm"
+          onClick={() => setShowLeftDropdown(!showLeftDropdown)}
+        >
+          <div className="flex items-center md:mr-4 text-black flex-shrink-0">
+            <span>Toolbar</span>
+            {/* <ChevronRight className="w-4 h-4" /> */}
+          </div>
+
+          {/* Desktop tools */}
+          <div className="hidden md:flex items-center space-x-3 overflow-x-auto whitespace-nowrap">
+            <button
+              onClick={() => onHideFields()}
+              disabled={!isColumnSelected}
+              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 disabled:text-gray-300"
+            >
+              <EyeOff className="w-4 h-4" />
+              <span>hide fields</span>
+            </button>
+            <button
+              onClick={() => onSort()}
+              disabled={!isColumnSelected}
+              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 disabled:text-gray-300"
+            >
+              <ArrowUpDown className="w-4 h-4" />
+              <span>Sort</span>
+            </button>
+            <button
+              disabled={true}
+              className="flex items-center space-x-1 text-gray-300 cursor-not-allowed"
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filter</span>
+            </button>
+            <button
+              disabled={true}
+              className="flex items-center space-x-1 text-gray-300 cursor-not-allowed"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span>Cell View</span>
+            </button>
+          </div>
+
+          {/* Mobile tools dropdown */}
+          <div className="md:hidden relative" ref={leftDropdownRef}>
+            <button
+              onClick={() => setShowLeftDropdown(!showLeftDropdown)}
+              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 p-1"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {showLeftDropdown && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-40">
+                <button
+                  onClick={() => {
+                    onHideFields();
+                    setShowLeftDropdown(false);
+                  }}
+                  disabled={!isColumnSelected}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:text-gray-300"
+                >
+                  <EyeOff className="w-4 h-4" />
+                  <span>Hide fields</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onSort();
+                    setShowLeftDropdown(false);
+                  }}
+                  disabled={!isColumnSelected}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 disabled:text-gray-300"
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                  <span>Sort</span>
+                </button>
+                <button
+                  disabled={true}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-300 cursor-not-allowed"
+                >
+                  <Filter className="w-4 h-4" />
+                  <span>Filter</span>
+                </button>
+                <button
+                  disabled={true}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-300 cursor-not-allowed"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  <span>Cell View</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right side */}
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center space-x-2">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md border border-gray-200"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Import</span>
+            </button>
+            <button
+              onClick={() => onExport()}
+              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md border border-gray-200"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export</span>
+            </button>
+            <button
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md border border-gray-200"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>Share</span>
+            </button>
+          </div>
+
+          {/* Mobile actions dropdown */}
+          <div className="md:hidden relative" ref={rightDropdownRef}>
+            <button
+              onClick={() => setShowRightDropdown(!showRightDropdown)}
+              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 p-1"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+            {showRightDropdown && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-32">
+                <button
+                  onClick={() => {
+                    setShowImportModal(true);
+                    setShowRightDropdown(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Import</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onExport();
+                    setShowRightDropdown(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowShareModal(true);
+                    setShowRightDropdown(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* New Action button - always visible */}
+          <button
+            onClick={handleNewAction}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-custom-green text-white text-sm rounded-md hover:bg-opacity-90"
+          >
+            <GitFork className="w-4 h-4" strokeWidth={2.5} />
+            <span className="hidden md:inline">New Action</span>
+          </button>
+        </div>
+      </div>
+
+      <ImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+      />
+
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+      />
+
+      <NewActionModal
+        isOpen={showNewActionModal}
+        onClose={() => setShowNewActionModal(false)}
+      />
+    </div>
+  );
+};
+
+export default Toolbar;
