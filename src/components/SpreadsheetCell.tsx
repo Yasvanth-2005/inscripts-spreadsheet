@@ -24,6 +24,7 @@ interface SpreadsheetCellProps {
   rowIndex?: number;
   colIndex?: number;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const SpreadsheetCell: React.FC<SpreadsheetCellProps> = ({
@@ -346,7 +347,7 @@ const SpreadsheetCell: React.FC<SpreadsheetCellProps> = ({
         {
           "bg-gray-50 font-medium text-gray-700 sticky top-0 z-20": isHeader,
           "bg-primary-100": isColumnSelected && !isSelected,
-          "bg-primary-50 border-primary-300 ring-2 ring-primary-500 ring-inset":
+          "bg-primary-50 border-primary-300 ring-1 ring-primary-500 ring-inset":
             isSelected && !isHeader,
           "bg-yellow-100 border-yellow-300":
             isHighlighted && !isSelected && !isHeader,

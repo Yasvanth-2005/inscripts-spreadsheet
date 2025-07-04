@@ -188,7 +188,7 @@ export const arrivedTasks: Task[] = [
 // Keep original for backward compatibility
 export const sampleTasks = allOrdersTasks;
 
-const headers = [
+export const headers = [
   "Job Request",
   "Submitted",
   "Status",
@@ -198,6 +198,39 @@ const headers = [
   "Priority",
   "Due Date",
   "Est. Value",
+];
+
+export const mainHeadersConfig = [
+  {
+    title: "Q3 Financial Overview",
+    icon: "GitBranch",
+    color: "gray",
+    columns: ["Job Request", "Submitted", "Status", "Submitter"],
+  },
+  {
+    title: "URL Spacer",
+    icon: "",
+    color: "white",
+    columns: ["URL"],
+  },
+  {
+    title: "ABC",
+    icon: "Music",
+    color: "green",
+    columns: ["Assigned"],
+  },
+  {
+    title: "Answer a question",
+    icon: "MessageSquareQuote",
+    color: "purple",
+    columns: ["Priority", "Due Date"],
+  },
+  {
+    title: "Extract",
+    icon: "Sparkles",
+    color: "orange",
+    columns: ["Est. Value"],
+  },
 ];
 
 const createSheetData = (

@@ -1,13 +1,12 @@
 import { useState, useCallback } from "react";
 import Header from "./components/Header";
 import Toolbar from "./components/Toolbar";
-import SubHeader from "./components/SubHeader";
 import SpreadsheetGrid from "./components/SpreadsheetGrid";
 import FilterTabs from "./components/FilterTabs";
 import AddColumnModal from "./components/AddColumnModal";
+import AddSheetModal from "./components/AddSheetModal";
 import { SpreadsheetData, SelectedCell, Sheet } from "./types/spreadsheet";
 import {
-  generateInitialData,
   generateSheetData,
   getCellId,
   createEmptyCell,
@@ -40,6 +39,7 @@ function App() {
   >([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
+  const [isAddSheetModalOpen, setIsAddSheetModalOpen] = useState(false);
 
   const getActiveSheet = useCallback(() => {
     return sheets.find((sheet) => sheet.id === activeSheetId)!;
@@ -48,18 +48,14 @@ function App() {
   const handleCellSelect = useCallback((row: number, column: number) => {
     setSelectedCell({ row, column });
     if (row === 0) {
-      // Header clicked - handle column selection
       setSelectedColumns((prev) => {
         if (prev.includes(column)) {
-          // Column already selected, remove it
           return prev.filter((col) => col !== column);
         } else {
-          // Add column to selection
           return [...prev, column];
         }
       });
     } else {
-      // Regular cell clicked - clear column selection
       setSelectedColumns([]);
     }
   }, []);
@@ -73,17 +69,18 @@ function App() {
 
   const handleSortIndicatorClick = useCallback(
     (column: number, e: React.MouseEvent) => {
-      e.stopPropagation(); // Prevent column selection
+      e.stopPropagation();
       setSortOrder((prev) => {
         const existingIndex = prev.findIndex((item) => item.column === column);
         if (existingIndex >= 0) {
-          // Toggle direction if already in sort order
           const newOrder = [...prev];
-          newOrder[existingIndex].direction =
-            newOrder[existingIndex].direction === "asc" ? "desc" : "asc";
+          if (newOrder[existingIndex].direction === "asc") {
+            newOrder[existingIndex].direction = "desc";
+          } else {
+            newOrder[existingIndex].direction = "asc";
+          }
           return newOrder;
         } else {
-          // Add new column to sort order
           return [...prev, { column, direction: "asc" }];
         }
       });
@@ -182,7 +179,7 @@ function App() {
                   | "number",
               },
             };
-            let newSheet = { ...sheet, data: newData };
+            const newSheet = { ...sheet, data: newData };
 
             if (row === sheet.rows - 1 && value) {
               const newRowIndex = sheet.rows;
@@ -230,37 +227,6 @@ function App() {
       );
     },
     [activeSheetId]
-  );
-
-  const handleToolbarAction = useCallback(
-    (action: string) => {
-      if (action === "addColumn") {
-        setIsAddColumnModalOpen(true);
-      } else if (action === "hide-fields" && selectedColumns.length > 0) {
-        setHiddenColumns((prev) => [...new Set([...prev, ...selectedColumns])]);
-        setSelectedColumns([]);
-      } else if (action === "show-all") {
-        setHiddenColumns([]);
-      } else if (action === "clear-sort") {
-        setSortOrder([]);
-      } else if (action === "sort" && selectedColumns.length > 0) {
-        setSortOrder((prev) => {
-          const newOrder = [...prev];
-          selectedColumns.forEach((col) => {
-            const isAlreadySorted = newOrder.some(
-              (item) => item.column === col
-            );
-            if (!isAlreadySorted) {
-              newOrder.push({ column: col, direction: "asc" });
-            }
-          });
-          return newOrder;
-        });
-        setSelectedColumns([]);
-      }
-      console.log(`Executing toolbar action: ${action}`);
-    },
-    [selectedColumns]
   );
 
   const handleSheetChange = useCallback((sheetId: string) => {
@@ -346,9 +312,39 @@ function App() {
     }
   }, [selectedColumns]);
 
-  const handleClearSort = useCallback(() => {
-    setSortOrder([]);
+  const handleClearSortForColumn = useCallback((column: number) => {
+    setSortOrder((prev) => prev.filter((item) => item.column !== column));
   }, []);
+
+  const handleAddSheet = useCallback(
+    (name: string) => {
+      // Copy headers from current sheet
+      const currentSheet = sheets.find((s) => s.id === activeSheetId);
+      if (!currentSheet) return;
+      const newId = name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
+      // Copy only header row (row 0)
+      const newData: SpreadsheetData = {};
+      for (let col = 0; col < currentSheet.columns; col++) {
+        const headerCellId = getCellId(0, col);
+        newData[headerCellId] = {
+          ...currentSheet.data[headerCellId],
+          id: getCellId(0, col),
+        };
+      }
+      setSheets((prev) => [
+        ...prev,
+        {
+          id: newId,
+          name,
+          data: newData,
+          rows: currentSheet.rows,
+          columns: currentSheet.columns,
+        },
+      ]);
+      setActiveSheetId(newId);
+    },
+    [sheets, activeSheetId]
+  );
 
   const activeSheet = getActiveSheet();
 
@@ -357,20 +353,13 @@ function App() {
       <Header onSearchChange={handleSearchChange} />
 
       <Toolbar
-        onAction={handleToolbarAction}
         isColumnSelected={selectedColumns.length > 0}
         onHideFields={handleHideFields}
         onShowAll={handleShowAll}
         onSort={handleSort}
-        onClearSort={handleClearSort}
-        selectedColumns={selectedColumns}
         hiddenColumns={hiddenColumns}
-        sheets={sheets}
-        currentSheet={activeSheetId}
         onExport={handleExport}
       />
-
-      <SubHeader />
 
       <div className="flex-1 overflow-auto">
         <SpreadsheetGrid
@@ -389,6 +378,7 @@ function App() {
           sortOrder={sortOrder}
           onSortIndicatorClick={handleSortIndicatorClick}
           onCellKeyDown={handleCellKeyDown}
+          onClearSortForColumn={handleClearSortForColumn}
         />
       </div>
 
@@ -397,9 +387,7 @@ function App() {
           sheets={sheets}
           activeSheetId={activeSheetId}
           onTabChange={handleSheetChange}
-          onAddSheet={() => {
-            /* TODO: Implement add sheet modal */
-          }}
+          onAddSheet={() => setIsAddSheetModalOpen(true)}
         />
       </div>
       <AddColumnModal
@@ -408,6 +396,14 @@ function App() {
         onAddColumn={(name) => {
           handleAddColumn(name);
           setIsAddColumnModalOpen(false);
+        }}
+      />
+      <AddSheetModal
+        isOpen={isAddSheetModalOpen}
+        onClose={() => setIsAddSheetModalOpen(false)}
+        onAddSheet={(name) => {
+          handleAddSheet(name);
+          setIsAddSheetModalOpen(false);
         }}
       />
     </div>

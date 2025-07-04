@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   EyeOff,
+  Eye,
   ArrowUpDown,
   Filter,
   Upload,
@@ -16,30 +17,20 @@ import ShareModal from "./ShareModal";
 import NewActionModal from "./NewActionModal";
 
 interface ToolbarProps {
-  onAction: (action: string) => void;
   isColumnSelected: boolean;
   onHideFields: () => void;
   onShowAll: () => void;
   onSort: () => void;
-  onClearSort: () => void;
-  selectedColumns: number[];
   hiddenColumns: number[];
-  sheets: any[];
-  currentSheet: string;
   onExport: () => void;
 }
 
 const Toolbar: React.FC<ToolbarProps> = ({
-  onAction,
   isColumnSelected,
   onHideFields,
   onShowAll,
   onSort,
-  onClearSort,
-  selectedColumns,
   hiddenColumns,
-  sheets,
-  currentSheet,
   onExport,
 }) => {
   const [showLeftDropdown, setShowLeftDropdown] = useState(false);
@@ -47,8 +38,10 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [showImportModal, setShowImportModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showNewActionModal, setShowNewActionModal] = useState(false);
+  const [showThreeDotsMenu, setShowThreeDotsMenu] = useState(false);
   const leftDropdownRef = useRef<HTMLDivElement>(null);
   const rightDropdownRef = useRef<HTMLDivElement>(null);
+  const threeDotsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -64,6 +57,12 @@ const Toolbar: React.FC<ToolbarProps> = ({
       ) {
         setShowRightDropdown(false);
       }
+      if (
+        threeDotsRef.current &&
+        !threeDotsRef.current.contains(event.target as Node)
+      ) {
+        setShowThreeDotsMenu(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -77,16 +76,18 @@ const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-1 relative">
+    <div className="bg-white border-b border-gray-200 px-4 py-1 relative sticky top-0 z-30">
       <div className="flex items-center justify-between">
         {/* Left side */}
         <div
           className="flex items-center space-x-0.5 text-sm"
           onClick={() => setShowLeftDropdown(!showLeftDropdown)}
         >
-          <div className="flex items-center md:mr-4 text-black flex-shrink-0">
-            <span>Toolbar</span>
-            {/* <ChevronRight className="w-4 h-4" /> */}
+          <div className="flex items-center text-black flex-shrink-0">
+            <span className="text-md font-[400] italic tracking-wide text-gray-800">
+              Tool bar
+            </span>
+            <span className="mx-3 h-6 border-l border-gray-300 opacity-50" />
           </div>
 
           {/* Desktop tools */}
@@ -99,6 +100,15 @@ const Toolbar: React.FC<ToolbarProps> = ({
               <EyeOff className="w-4 h-4" />
               <span>hide fields</span>
             </button>
+            {hiddenColumns.length > 0 && (
+              <button
+                onClick={() => onShowAll()}
+                className="flex items-center space-x-1 text-gray-600 hover:text-gray-900"
+              >
+                <Eye className="w-4 h-4" />
+                <span>show fields</span>
+              </button>
+            )}
             <button
               onClick={() => onSort()}
               disabled={!isColumnSelected}
@@ -144,6 +154,18 @@ const Toolbar: React.FC<ToolbarProps> = ({
                   <EyeOff className="w-4 h-4" />
                   <span>Hide fields</span>
                 </button>
+                {hiddenColumns.length > 0 && (
+                  <button
+                    onClick={() => {
+                      onShowAll();
+                      setShowLeftDropdown(false);
+                    }}
+                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    <Eye className="w-4 h-4" />
+                    <span>Show fields</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     onSort();
@@ -176,8 +198,55 @@ const Toolbar: React.FC<ToolbarProps> = ({
 
         {/* Right side */}
         <div className="flex items-center space-x-2 flex-shrink-0">
-          {/* Desktop actions */}
-          <div className="hidden md:flex items-center space-x-2">
+          {/* Desktop actions - three dots menu until large screens */}
+          <div
+            className="hidden md:block lg:hidden relative"
+            ref={threeDotsRef}
+          >
+            <button
+              onClick={() => setShowThreeDotsMenu(!showThreeDotsMenu)}
+              className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 p-1"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+            {showThreeDotsMenu && (
+              <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-50 min-w-32">
+                <button
+                  onClick={() => {
+                    setShowImportModal(true);
+                    setShowThreeDotsMenu(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Import</span>
+                </button>
+                <button
+                  onClick={() => {
+                    onExport();
+                    setShowThreeDotsMenu(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowShareModal(true);
+                    setShowThreeDotsMenu(false);
+                  }}
+                  className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop actions - individual buttons on large screens and above */}
+          <div className="hidden lg:flex items-center space-x-2">
             <button
               onClick={() => setShowImportModal(true)}
               className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md border border-gray-200"

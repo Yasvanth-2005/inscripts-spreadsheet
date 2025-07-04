@@ -7,7 +7,7 @@ import {
   Plus,
 } from "lucide-react";
 
-const SubHeader = () => {
+const SubHeader: React.FC = () => {
   return (
     <div className="bg-white px-4 py-2 flex items-center justify-between border-b border-gray-200 overflow-x-auto whitespace-nowrap">
       <div className="flex items-center space-x-3">
