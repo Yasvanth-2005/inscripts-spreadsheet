@@ -10,6 +10,7 @@ import {
   generateSheetData,
   getCellId,
   createEmptyCell,
+  mainHeaderConfig as initialMainHeaderConfig,
 } from "./utils/spreadsheet";
 
 const initialTabs = [
@@ -40,6 +41,9 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddColumnModalOpen, setIsAddColumnModalOpen] = useState(false);
   const [isAddSheetModalOpen, setIsAddSheetModalOpen] = useState(false);
+  const [mainHeaderConfig, setMainHeaderConfig] = useState(
+    initialMainHeaderConfig
+  );
 
   const getActiveSheet = useCallback(() => {
     return sheets.find((sheet) => sheet.id === activeSheetId)!;
@@ -62,7 +66,6 @@ function App() {
 
   const handleCellDoubleClick = useCallback((row: number, column: number) => {
     if (row === 0) {
-      // Double-click on header - deselect column
       setSelectedColumns((prev) => prev.filter((col) => col !== column));
     }
   }, []);
@@ -110,14 +113,12 @@ function App() {
         shouldNavigate = true;
 
         if (e.shiftKey) {
-          // Shift + Tab
           nextColIndex--;
           if (nextColIndex < 0) {
             nextRow = Math.max(0, row - 1);
             nextColIndex = visibleColumns.length - 1;
           }
         } else {
-          // Tab
           nextColIndex++;
           if (nextColIndex >= visibleColumns.length) {
             nextRow = Math.min(activeSheet.rows - 1, row + 1);
@@ -200,7 +201,9 @@ function App() {
   );
 
   const handleAddColumn = useCallback(
-    (name: string) => {
+    (mainHeaderName: string | undefined, headerName: string) => {
+      const groupName =
+        mainHeaderName && mainHeaderName.trim() ? mainHeaderName : " ";
       setSheets((prevSheets) =>
         prevSheets.map((sheet) => {
           if (sheet.id === activeSheetId) {
@@ -211,11 +214,18 @@ function App() {
             const headerCellId = getCellId(0, newColIndex);
             newData[headerCellId] = {
               id: headerCellId,
-              value: name,
+              value: headerName,
               type: "text",
             };
 
-            for (let i = 1; i < sheet.rows; i++) {
+            const subHeaderCellId = getCellId(1, newColIndex);
+            newData[subHeaderCellId] = {
+              id: subHeaderCellId,
+              value: " ",
+              type: "text",
+            };
+
+            for (let i = 2; i < sheet.rows; i++) {
               const cellId = getCellId(i, newColIndex);
               newData[cellId] = createEmptyCell(i, newColIndex);
             }
@@ -225,6 +235,26 @@ function App() {
           return sheet;
         })
       );
+      setMainHeaderConfig((prev) => {
+        const lastCol = prev.reduce((max, h) => Math.max(max, h.toColumn), -1);
+        const existing = prev.find((h) => h.label === groupName);
+        if (existing) {
+          return prev.map((h) =>
+            h.label === groupName ? { ...h, toColumn: h.toColumn + 1 } : h
+          );
+        } else {
+          return [
+            ...prev,
+            {
+              label: groupName,
+              fromColumn: lastCol + 1,
+              toColumn: lastCol + 1,
+              type: "main",
+              colorClass: "#F3F4F6",
+            },
+          ];
+        }
+      });
     },
     [activeSheetId]
   );
@@ -250,19 +280,17 @@ function App() {
       (_, index) => index
     ).filter((c) => !hiddenColumns.includes(c));
 
-    // Add headers
     const headers = visibleColumns.map((col) => {
       const cellId = getCellId(0, col);
       return activeSheet.data[cellId]?.value || `Column ${col + 1}`;
     });
     csvData.push(headers.join(","));
 
-    // Add data rows
     for (let row = 1; row < activeSheet.rows; row++) {
       const rowData = visibleColumns.map((col) => {
         const cellId = getCellId(row, col);
         const value = activeSheet.data[cellId]?.value || "";
-        // Escape commas and quotes in CSV
+
         return typeof value === "string" && value.includes(",")
           ? `"${value.replace(/"/g, '""')}"`
           : value;
@@ -318,11 +346,10 @@ function App() {
 
   const handleAddSheet = useCallback(
     (name: string) => {
-      // Copy headers from current sheet
       const currentSheet = sheets.find((s) => s.id === activeSheetId);
       if (!currentSheet) return;
       const newId = name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
-      // Copy only header row (row 0)
+
       const newData: SpreadsheetData = {};
       for (let col = 0; col < currentSheet.columns; col++) {
         const headerCellId = getCellId(0, col);
@@ -379,6 +406,7 @@ function App() {
           onSortIndicatorClick={handleSortIndicatorClick}
           onCellKeyDown={handleCellKeyDown}
           onClearSortForColumn={handleClearSortForColumn}
+          mainHeaderConfig={mainHeaderConfig}
         />
       </div>
 
@@ -393,8 +421,8 @@ function App() {
       <AddColumnModal
         isOpen={isAddColumnModalOpen}
         onClose={() => setIsAddColumnModalOpen(false)}
-        onAddColumn={(name) => {
-          handleAddColumn(name);
+        onAddColumn={(name, column) => {
+          handleAddColumn(name, column);
           setIsAddColumnModalOpen(false);
         }}
       />

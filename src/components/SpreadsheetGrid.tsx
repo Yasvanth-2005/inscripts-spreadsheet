@@ -1,21 +1,26 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { SpreadsheetData, SelectedCell } from "../types/spreadsheet";
-import { getCellId, headers, mainHeadersConfig } from "../utils/spreadsheet";
+import { getCellId, MainHeaderConfig } from "../utils/spreadsheet";
 import SpreadsheetCell from "./SpreadsheetCell";
 import {
-  Tag,
   User,
-  UserCheck,
   Flag,
-  DollarSign,
   ChevronDown,
   FileText,
   Calendar,
   Music,
   MessageSquareQuote,
   Sparkles,
-  GitBranch,
   HardDriveDownload,
+  LucideIcon,
+  Link,
+  CheckCircle,
+  IndianRupee,
+  GitFork,
+  MoreHorizontal,
+  Filter,
+  SlidersHorizontal,
+  GitBranch,
 } from "lucide-react";
 
 interface SpreadsheetGridProps {
@@ -38,6 +43,7 @@ interface SpreadsheetGridProps {
   onSortIndicatorClick: (column: number, e: React.MouseEvent) => void;
   onCellKeyDown: (e: React.KeyboardEvent, row: number, col: number) => void;
   onClearSortForColumn: (column: number) => void;
+  mainHeaderConfig: MainHeaderConfig[];
 }
 
 const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
@@ -56,6 +62,7 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
   onSortIndicatorClick,
   onCellKeyDown,
   onClearSortForColumn,
+  mainHeaderConfig,
 }) => {
   const gridRef = useRef<HTMLDivElement>(null);
   const [columnWidths, setColumnWidths] = useState<Record<number, number>>({});
@@ -70,11 +77,13 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
     );
   }, [columns, hiddenColumns]);
 
-  // Initialize column widths
   useEffect(() => {
     const initialWidths: Record<number, number> = {};
     visibleColumns.forEach((col) => {
-      initialWidths[col] = col === 0 ? 250 : 150; // Set Job Request width to 250px, others to 150px
+      initialWidths[col] = 150;
+      if (col === 0) {
+        initialWidths[col] = 250;
+      }
     });
     setColumnWidths(initialWidths);
   }, [visibleColumns]);
@@ -83,7 +92,7 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
     setIsResizing(true);
     setResizingCol(colIndex);
     setStartX(e.clientX);
-    setStartWidth(columnWidths[colIndex] || 150); // Use current width or default
+    setStartWidth(columnWidths[colIndex] || 150);
   };
 
   useEffect(() => {
@@ -93,7 +102,7 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
       const newWidth = startWidth + (e.clientX - startX);
       setColumnWidths((prevWidths) => ({
         ...prevWidths,
-        [resizingCol]: Math.max(50, newWidth), // Minimum width of 50px
+        [resizingCol]: Math.max(50, newWidth),
       }));
     };
 
@@ -119,7 +128,6 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
   const sortedData = useMemo(() => {
     let newData = { ...data };
 
-    // Apply sort order
     const sortedColumnIndices = sortOrder.map((s) => s.column);
     const primarySort = sortOrder[0];
 
@@ -130,13 +138,13 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
       const rowsToSort = Object.keys(newData)
         .filter((id) => {
           const [row] = id.split("-").map(Number);
-          return row > 0; // Exclude header row (row 0)
+          return row > 0;
         })
         .map((id) => {
           const [row] = id.split("-").map(Number);
           return row;
         })
-        .filter((value, index, self) => self.indexOf(value) === index) // Get unique row numbers
+        .filter((value, index, self) => self.indexOf(value) === index)
         .sort((rowA, rowB) => {
           const cellA = newData[getCellId(rowA, colIndex)]?.value;
           const cellB = newData[getCellId(rowB, colIndex)]?.value;
@@ -155,24 +163,21 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
       const newOrderedData: SpreadsheetData = {};
       const newHeaders: SpreadsheetData = {};
 
-      // Copy header row
       for (let col = 0; col < columns; col++) {
         const headerCellId = getCellId(0, col);
         newHeaders[headerCellId] = newData[headerCellId];
       }
 
-      // Copy sorted data rows
       sortedColumnIndices.forEach(() => {
         rowsToSort.forEach((row, newRowIndex) => {
           for (let col = 0; col < columns; col++) {
             const originalCellId = getCellId(row, col);
-            const newCellId = getCellId(newRowIndex + 1, col); // Adjust row index for new order
+            const newCellId = getCellId(newRowIndex + 1, col);
             newOrderedData[newCellId] = newData[originalCellId];
           }
         });
       });
 
-      // Fill in remaining empty cells for the new order
       for (let row = 1; row <= rows; row++) {
         for (let col = 0; col < columns; col++) {
           const cellId = getCellId(row, col);
@@ -187,7 +192,6 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
       }
       newData = { ...newHeaders, ...newOrderedData };
     } else {
-      // If no sort, ensure data is reset to original positions for all rows beyond headers
       for (let row = 1; row <= rows; row++) {
         for (let col = 0; col < columns; col++) {
           const cellId = getCellId(row, col);
@@ -218,6 +222,31 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
     return rows;
   }, [rows]);
 
+  const getLucideIcon = (iconName: string): LucideIcon | null => {
+    switch (iconName) {
+      case "Link":
+        return Link;
+      case "Music":
+        return Music;
+      case "MessageSquareQuote":
+        return MessageSquareQuote;
+      case "Sparkles":
+        return Sparkles;
+      case "HardDriveDownload":
+        return HardDriveDownload;
+      case "GitFork":
+        return GitFork;
+      case "Filter":
+        return Filter;
+      case "SlidersHorizontal":
+        return SlidersHorizontal;
+      case "GitBranch":
+        return GitBranch;
+      default:
+        return null;
+    }
+  };
+
   const getHeaderIcon = (headerText: string | number | null) => {
     const text = String(headerText).toLowerCase();
     switch (text) {
@@ -226,15 +255,17 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
       case "submitted":
         return <Calendar className="w-4 h-4 mr-2 text-gray-500" />;
       case "status":
-        return <Tag className="w-4 h-4 mr-2 text-gray-500" />;
+        return <CheckCircle className="w-4 h-4 mr-2 text-gray-500" />;
       case "submitter":
         return <User className="w-4 h-4 mr-2 text-gray-500" />;
+      case "url":
+        return <Link className="w-4 h-4 mr-2 text-gray-500" />;
       case "assigned":
-        return <UserCheck className="w-4 h-4 mr-2 text-gray-500" />;
+        return <GitBranch className="w-4 h-4 mr-2 text-gray-500" />;
       case "priority":
         return <Flag className="w-4 h-4 mr-2 text-gray-500" />;
       case "est. value":
-        return <DollarSign className="w-4 h-4 mr-2 text-gray-500" />;
+        return <IndianRupee className="w-4 h-4 mr-2 text-gray-500" />;
       default:
         return null;
     }
@@ -248,21 +279,23 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
     return text;
   };
 
-  // Function to get Lucide icon component based on string name
-  const getLucideIcon = (iconName: string) => {
-    switch (iconName) {
-      case "GitBranch":
-        return GitBranch;
-      case "Music":
-        return Music;
-      case "MessageSquareQuote":
-        return MessageSquareQuote;
-      case "Sparkles":
-        return Sparkles;
-      case "HardDriveDownload":
-        return HardDriveDownload;
+  // Hardcoded color mapping for subheaders
+  const getSubheaderStyle = (headerValue: string) => {
+    switch (headerValue) {
+      case "assigned":
+        return { backgroundColor: "#E8F0E9", color: "#3A5A40" };
+      case "priority":
+        return { backgroundColor: "#EAE3FC", color: "#5F4B8B" };
+      case "due date":
+        return { backgroundColor: "#EAE3FC", color: "#5F4B8B" };
+      case "est. value":
+        return { backgroundColor: "#FFE9E0", color: "#C97B63" };
+      case "extract":
+        return { backgroundColor: "#FFE9E0", color: "#C97B63" };
+      case "answer a question":
+        return { backgroundColor: "#EAE3FC", color: "#5F4B8B" };
       default:
-        return null;
+        return { backgroundColor: "#E2E2E2", color: "#444" };
     }
   };
 
@@ -273,7 +306,7 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
         className="grid gap-0 border-l border-t border-gray-300 min-w-max"
         style={{
           gridTemplateColumns,
-          gridTemplateRows: "32px 32px auto", // Two header rows and then auto for content
+          gridTemplateRows: "32px 32px auto",
           cursor: isResizing ? "col-resize" : "default",
         }}
       >
@@ -284,50 +317,48 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
           style={{ gridColumn: "1 / span 1", gridRow: "1" }}
         />
 
-        {mainHeadersConfig.map((mainHeader, mainHeaderIndex) => {
-          const startColName = mainHeader.columns[0];
-          const endColName = mainHeader.columns[mainHeader.columns.length - 1];
-
-          const startIndex = headers.indexOf(startColName);
-          const endIndex = headers.indexOf(endColName);
-
-          if (startIndex === -1 || endIndex === -1) {
-            console.warn(`Main header columns not found: ${mainHeader.title}`);
-            return null;
-          }
-
-          const span = endIndex - startIndex + 1;
-          const gridColumnStart = startIndex + 2; // +1 for # column, +1 for 1-indexed grid
-
-          const IconComponent = getLucideIcon(mainHeader.icon);
-          const bgColor = `bg-${mainHeader.color}-100`;
-          const textColor = `text-${mainHeader.color}-800`;
-
-          // Special handling for URL spacer, which should be white
-          if (mainHeader.title === "URL Spacer") {
-            return (
-              <div
-                key={`main-header-${mainHeaderIndex}`}
-                className="sticky top-0 z-10 bg-white border-r border-b border-gray-300 h-8 min-h-8 max-h-8"
-                style={{
-                  gridColumn: `${gridColumnStart} / span ${span}`,
-                  gridRow: "1",
-                }}
-              />
-            );
-          }
+        {mainHeaderConfig.map((header: MainHeaderConfig, index: number) => {
+          const colSpan = header.toColumn - header.fromColumn + 1;
+          const IconComponent = header.icon ? getLucideIcon(header.icon) : null;
 
           return (
             <div
-              key={`main-header-${mainHeaderIndex}`}
-              className={`sticky top-0 z-10 ${bgColor} ${textColor} border-r border-b border-gray-300 flex items-center justify-center px-2 text-sm font-medium h-8 min-h-8 max-h-8`}
+              key={`main-header-${index}`}
+              className={`sticky top-0 z-10 border-r border-b border-gray-300 flex items-center px-2 text-sm font-medium h-8 min-h-8 max-h-8 ${
+                header.label === "Q3 Financial Overview"
+                  ? "justify-between"
+                  : "justify-center"
+              }`}
               style={{
-                gridColumn: `${gridColumnStart} / span ${span}`,
+                gridColumn: `${header.fromColumn + 1} / span ${colSpan}`,
                 gridRow: "1",
+                backgroundColor: header.colorClass || "",
               }}
             >
-              {IconComponent && <IconComponent className="w-4 h-4 mr-1" />}
-              <span>{mainHeader.title}</span>
+              <div className="flex items-center ">
+                {IconComponent && (
+                  <IconComponent
+                    className={`w-4 h-4 mr-1 ${
+                      header.label === "Q3 Financial Overview"
+                        ? "text-blue-500"
+                        : ""
+                    }`}
+                  />
+                )}
+                {header.label && (
+                  <span className="font-medium whitespace-nowrap">
+                    {header.label}
+                  </span>
+                )}
+              </div>
+              {(header.label === "ABC" ||
+                header.label === "Answer a question" ||
+                header.label === "Extract") && (
+                <MoreHorizontal className="w-4 h-4 text-gray-400 opacity-50 ml-1" />
+              )}
+              {header.label === "Q3 Financial Overview" && (
+                <HardDriveDownload className="w-4 h-4 text-gray-400 flex-shrink-0 ml-1" />
+              )}
             </div>
           );
         })}
@@ -348,70 +379,76 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
 
         {/* Row header for second header row */}
         <div
-          className="sticky left-0 top-0 z-20 bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-xs font-medium text-gray-600 h-8 min-h-8 max-h-8"
+          className="sticky left-0 top-0 z-20 bg-gray-100 border-r border-b border-gray-300 flex items-center justify-center text-base font-medium text-gray-600 h-8 min-h-8 max-h-8"
           style={{ height: "32px", gridColumn: "1 / span 1", gridRow: "2" }}
         >
           #
         </div>
 
         {/* Column headers (second header row) */}
-        {visibleColumns.map((col, index) => (
-          <div
-            key={`header-${col}`}
-            className={`sticky top-0 z-10 border-r border-b border-gray-300 flex items-center justify-between px-2 text-sm font-medium h-8 min-h-8 max-h-8 cursor-pointer select-none ${
-              selectedColumns.includes(col)
-                ? "bg-primary-200"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-600"
-            }`}
-            style={{ gridColumn: `${index + 2} / span 1`, gridRow: "2" }}
-            onClick={() => onCellSelect(0, col)}
-            onDoubleClick={() => onCellDoubleClick(0, col)}
-          >
-            <div className="flex items-center">
-              {getHeaderIcon(sortedData[getCellId(0, col)]?.value)}
-              <span className="truncate">
-                {getHeaderText(sortedData[getCellId(0, col)]?.value) ||
-                  `Column ${col + 1}`}
-              </span>
-            </div>
-            <div className="flex items-center">
-              {sortOrder.find((s) => s.column === col) && (
-                <>
-                  <span
-                    className="text-primary-600 cursor-pointer hover:text-primary-800"
-                    onClick={(e) => onSortIndicatorClick(col, e)}
-                  >
-                    {sortOrder.find((s) => s.column === col)?.direction ===
-                    "asc"
-                      ? "↑"
-                      : "↓"}
-                    <span className="text-xs ml-0.5">
-                      {sortOrder.findIndex((s) => s.column === col) + 1}
-                    </span>
-                  </span>
-                  <button
-                    className="ml-1 text-gray-400 hover:text-red-500 text-xs focus:outline-none"
-                    title="Clear Sort"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClearSortForColumn(col);
-                    }}
-                  >
-                    ×
-                  </button>
-                </>
-              )}
-              <ChevronDown className="w-4 h-4 ml-1 text-gray-400 opacity-50" />
-            </div>
-
-            {/* Resize handle */}
+        {visibleColumns.map((col, index) => {
+          const headerValue = (sortedData[getCellId(0, col)]?.value || "")
+            .toString()
+            .toLowerCase();
+          const subheaderStyle = getSubheaderStyle(headerValue);
+          return (
             <div
-              className="absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-primary-500 opacity-25 hover:opacity-75 z-30"
-              onMouseDown={(e) => handleMouseDown(e, col)}
-              style={{ width: "2px" }}
-            />
-          </div>
-        ))}
+              key={`header-${col}`}
+              className={`sticky top-0 z-10 border-r border-b border-gray-300 flex items-center justify-between px-2 text-sm font-medium h-8 min-h-8 max-h-8 cursor-pointer select-none`}
+              style={{
+                gridColumn: `${index + 2} / span 1`,
+                gridRow: "2",
+                ...subheaderStyle,
+              }}
+              onClick={() => onCellSelect(0, col)}
+              onDoubleClick={() => onCellDoubleClick(0, col)}
+            >
+              <div className="flex items-center">
+                {getHeaderIcon(sortedData[getCellId(0, col)]?.value)}
+                <span className="whitespace-nowrap">
+                  {getHeaderText(sortedData[getCellId(0, col)]?.value) ||
+                    `Column ${col + 1}`}
+                </span>
+              </div>
+              <div className="flex items-center">
+                {sortOrder.find((s) => s.column === col) && (
+                  <>
+                    <span
+                      className="text-primary-600 cursor-pointer hover:text-primary-800"
+                      onClick={(e) => onSortIndicatorClick(col, e)}
+                    >
+                      {sortOrder.find((s) => s.column === col)?.direction ===
+                      "asc"
+                        ? "↑"
+                        : "↓"}
+                      <span className="text-xs ml-0.5">
+                        {sortOrder.findIndex((s) => s.column === col) + 1}
+                      </span>
+                    </span>
+                    <button
+                      className="ml-1 text-gray-400 hover:text-red-500 text-xs focus:outline-none"
+                      title="Clear Sort"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onClearSortForColumn(col);
+                      }}
+                    >
+                      ×
+                    </button>
+                  </>
+                )}
+                <ChevronDown className="w-4 h-4 ml-1 text-gray-400 opacity-50" />
+              </div>
+
+              {/* Resize handle */}
+              <div
+                className="absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-primary-500 opacity-25 hover:opacity-75 z-30"
+                onMouseDown={(e) => handleMouseDown(e, col)}
+                style={{ width: "2px" }}
+              />
+            </div>
+          );
+        })}
 
         {/* Empty cell for add column button column in the second header row */}
         <div
@@ -433,9 +470,13 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
 
               {/* Data cells */}
               {visibleColumns.map((col, index) => {
+                const headerValue = (sortedData[getCellId(0, col)]?.value || "")
+                  .toString()
+                  .toLowerCase();
+                const isCenter =
+                  headerValue === "status" || headerValue === "priority";
                 const cellData = filteredData[getCellId(row, col)];
                 const isJobRequest = col === 0;
-
                 return (
                   <SpreadsheetCell
                     key={`${row}-${col}`}
@@ -454,7 +495,9 @@ const SpreadsheetGrid: React.FC<SpreadsheetGridProps> = ({
                     rowIndex={row}
                     colIndex={col}
                     onKeyDown={onCellKeyDown}
-                    className={isJobRequest ? "line-clamp-1" : ""}
+                    className={`${isJobRequest ? "line-clamp-1" : ""} ${
+                      isCenter ? "text-center" : ""
+                    }`}
                     style={{
                       gridColumn: `${index + 2} / span 1`,
                       gridRow: `${row + 2}`,

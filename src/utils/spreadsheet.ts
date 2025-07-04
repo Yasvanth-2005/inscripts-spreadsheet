@@ -185,10 +185,60 @@ export const arrivedTasks: Task[] = [
   },
 ];
 
+export interface MainHeaderConfig {
+  label: string;
+  fromColumn: number;
+  toColumn: number;
+  type: "normal" | "url" | "main";
+  icon?: string;
+  colorClass?: string;
+}
+
+export const mainHeaderConfig: MainHeaderConfig[] = [
+  {
+    label: "Q3 Financial Overview",
+    fromColumn: 1,
+    toColumn: 4,
+    type: "main",
+    icon: "Link",
+    colorClass: "#E2E2E2",
+  },
+  {
+    label: "",
+    fromColumn: 5,
+    toColumn: 5,
+    type: "url",
+  },
+  {
+    label: "ABC",
+    fromColumn: 6,
+    toColumn: 6,
+    type: "main",
+    icon: "GitFork",
+    colorClass: "#D2E0D4",
+  },
+  {
+    label: "Answer a question",
+    fromColumn: 7,
+    toColumn: 8,
+    type: "main",
+    icon: "GitFork",
+    colorClass: "#DCCFFC",
+  },
+  {
+    label: "Extract",
+    fromColumn: 9,
+    toColumn: 9,
+    type: "main",
+    icon: "GitFork",
+    colorClass: "#FAC2AF",
+  },
+];
+
 // Keep original for backward compatibility
 export const sampleTasks = allOrdersTasks;
 
-export const headers = [
+const headers = [
   "Job Request",
   "Submitted",
   "Status",
@@ -198,39 +248,6 @@ export const headers = [
   "Priority",
   "Due Date",
   "Est. Value",
-];
-
-export const mainHeadersConfig = [
-  {
-    title: "Q3 Financial Overview",
-    icon: "GitBranch",
-    color: "gray",
-    columns: ["Job Request", "Submitted", "Status", "Submitter"],
-  },
-  {
-    title: "URL Spacer",
-    icon: "",
-    color: "white",
-    columns: ["URL"],
-  },
-  {
-    title: "ABC",
-    icon: "Music",
-    color: "green",
-    columns: ["Assigned"],
-  },
-  {
-    title: "Answer a question",
-    icon: "MessageSquareQuote",
-    color: "purple",
-    columns: ["Priority", "Due Date"],
-  },
-  {
-    title: "Extract",
-    icon: "Sparkles",
-    color: "orange",
-    columns: ["Est. Value"],
-  },
 ];
 
 const createSheetData = (

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 interface AddColumnModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddColumn: (name: string) => void;
+  onAddColumn: (mainHeaderName: string, headerName: string) => void;
 }
 
 const AddColumnModal: React.FC<AddColumnModalProps> = ({
@@ -11,15 +11,17 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({
   onClose,
   onAddColumn,
 }) => {
-  const [columnName, setColumnName] = useState("");
+  const [mainHeaderName, setMainHeaderName] = useState("");
+  const [headerName, setHeaderName] = useState("");
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (columnName.trim()) {
-      onAddColumn(columnName.trim());
-      setColumnName("");
+    if (headerName.trim()) {
+      onAddColumn(mainHeaderName.trim(), headerName.trim());
+      setMainHeaderName("");
+      setHeaderName("");
       onClose();
     }
   };
@@ -37,11 +39,18 @@ const AddColumnModal: React.FC<AddColumnModalProps> = ({
         <form onSubmit={handleSubmit}>
           <input
             type="text"
-            value={columnName}
-            onChange={(e) => setColumnName(e.target.value)}
-            placeholder="Enter column name"
+            value={mainHeaderName}
+            onChange={(e) => setMainHeaderName(e.target.value)}
+            placeholder="Enter group name (Optional)"
             className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4"
             autoFocus
+          />
+          <input
+            type="text"
+            value={headerName}
+            onChange={(e) => setHeaderName(e.target.value)}
+            placeholder="Enter column name"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 mb-4"
           />
           <div className="flex justify-end space-x-2">
             <button
