@@ -79,8 +79,9 @@ function App() {
           const newOrder = [...prev];
           if (newOrder[existingIndex].direction === "asc") {
             newOrder[existingIndex].direction = "desc";
-          } else {
-            newOrder[existingIndex].direction = "asc";
+          } else if (newOrder[existingIndex].direction === "desc") {
+            // Remove the column from sortOrder (toggle off)
+            newOrder.splice(existingIndex, 1);
           }
           return newOrder;
         } else {
